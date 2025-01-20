@@ -9,29 +9,53 @@
 支援的第三方整合
 
 目前已實現的第三方整合包括：
+
 	1.	Bitdefender
+ 
 	2.	External Program
+ 
 	3.	Cisco AMP
+ 
 	4.	Cisco FMC
+ 
 	5.	Cisco ISE
+ 
 	6.	Cisco Meraki
+ 
 	7.	Cisco PxGrid
+ 
 	8.	ClearPass
+ 
 	9.	Endgame
+ 
 	10.	Fortinet (FortiOS)
+ 
 	11.	Harmony
+ 
 	12.	McAfee EPO
+ 
 	13.	Palo Alto (Panorama 或單機)
+ 
 	14.	PAN Cortex
+ 
 	15.	Pulse Secure NAC
+ 
 	16.	Sophos 
+ 
 	17.	Static destination IP blocking
+ 
 	18.	Trendmicro ApexOne
+ 
 	19.	Trendmicro CloudOne
+ 
 	20.	Trendmicro VisionOne
+ 
 	21.	VMware vSphere
+ 
 	22.	WatchGuard
+ 
 	23.	Windows（直接執行 PowerShell 關閉主機）
+ 
 	24.	WithSecure Elements
 
 整合的特定文檔可以在相關目錄中找到。
