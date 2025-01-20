@@ -1,227 +1,141 @@
-# Introduction
+以下是該 README 的繁體中文翻譯與重點整理：
 
-This is a framework meant to allow for easy integration of any third-party security vendor. 
+簡介
 
-Based on various input parameters (details below), the script returns a list of Host/Accounts/Detections to be blocked/unblocked. 
+這是一個框架，旨在簡化與第三方安全廠商的整合。
+根據多種輸入參數（詳情如下），此腳本返回需要被阻止/解除阻止的主機、帳戶或檢測項列表。
 
-The code defines an [abstract class](./third_party_clients/third_party_interface.py) which third-party clients must extend, which allows for easy integration with the workflow implemented by the base script. 
+程式碼中定義了一個抽象類，第三方客戶端需要繼承此類，以便輕鬆整合基礎腳本的工作流程。
 
-Since adding a new third party integration only requires to extend that class, I'd encourage to use this framework for any new integrations being built. 
+由於新增整合僅需擴展該抽象類，建議對所有新的整合需求使用此框架。
 
-# Third party integrations
+支援的第三方整合
 
-Currently, the following third party integrations are implemented:
-1.	Bitdefender
-2.	Call an external program
-3.	Cisco AMP
-4.	Cisco FMC
-5.	Cisco ISE
-6.	Cisco Meraki
-7.	Cisco PxGrid
-8.	ClearPass
-9.	Endgame
-10.	Fortinet Firewalls (FortiOS)
-11.	Harmony
-12.	McAfee EPO
-13.	Palo Alto Network Firewalls (Panorama or not)
-14.	PAN Cortex
-15.	Pulse Secure NAC
-16.	Sophos Firewall
-17.	Static destination IP blocking
-18.	Trendmicro ApexOne
-19.	Trendmicro CloudOne
-20.	Trendmicro VisionOne
-21.	VMWare vSphere
-22.	WatchGuard
-23.	Windows (direct PowerShell commands to shutdown host)
-24.	WithSecure Elements
+目前已實現的第三方整合包括：
+	1.	Bitdefender
+	2.	External Program
+	3.	Cisco AMP
+	4.	Cisco FMC
+	5.	Cisco ISE
+	6.	Cisco Meraki
+	7.	Cisco PxGrid
+	8.	ClearPass
+	9.	Endgame
+	10.	Fortinet (FortiOS)
+	11.	Harmony
+	12.	McAfee EPO
+	13.	Palo Alto (Panorama 或單機)
+	14.	PAN Cortex
+	15.	Pulse Secure NAC
+	16.	Sophos 
+	17.	Static destination IP blocking
+	18.	Trendmicro ApexOne
+	19.	Trendmicro CloudOne
+	20.	Trendmicro VisionOne
+	21.	VMware vSphere
+	22.	WatchGuard
+	23.	Windows（直接執行 PowerShell 關閉主機）
+	24.	WithSecure Elements
 
-Integration-specific documentation can be found in the [relevant folders](./third_party_clients/) of the third party integrations. 
+整合的特定文檔可以在相關目錄中找到。
 
-# Requirements
+需求
+	1.	使用以下指令安裝必要的 Python 模組：
 
-Install the python module requirements utilizing pip3:
-
-`pip3 install -r requirements.txt`  
-
-> Vectra API Tools version 2.4+ is required to support account based groups.
-
-# Workflow
-
-The script supports host, account, and detection based blocking. Parameters defining what host/account/detections get blocked are defined in the [config.py](./config.py) file.
-
-# Secrets Storage
-
-This script utilize the Python Keyring package to securely store secrets locally to where the script is ran.  The script will check the default keyring for the necessary secrets and prompt the user if they are not found. The default configuration is to store the secrets after input. If user desires not to store the secrets, utilize the **--no_store_secrets** option.
-
-# Getting a Vectra API token for Vectra Detect API (v2).
-
-Vectra Detect API v2 utilizes token based authentication. To create a token, login into Vectra, go to "My Profile" and click to create an API token. Note that only local accounts can generate API tokens.
-
-Vectra API tokens will be linked to the user that created them, and inherit the rights of that user. Any actions done using that API token will also show under the same username in the audit logs. 
-
-You may want to create a separate user for the API integration for audit purposes, and only give it fine-grained RBAC rights. For the integration to work, the user will need:
-* Read access to Hosts
-* Read access to Accounts
-* Read access to Detections
-* Read access to "Manage - Groups"
-* Read/Write access to tags
-* Read/Write access to Notes & Other User's Notes
-
-# Getting a Vectra API Client ID and Secret Key for Vectra Platform API (v3). 
-
-Access to the Vectra Platform API is done through the creation of an API Client. Creation of an API Client will provide a set of OAuth 2.0 credentials that will be used to gain authorization to the Vectra Platform API. Please note that management of API Clients is restricted to Detect users with the role of “Super Admin”. To create an API client, log into your Detect portal and navigate to Manage > API Clients. From the API Clients page, select ‘Add API Client’ to create a new client. Once created, be sure to record your Client ID and Secret Key for safekeeping. You will need these two pieces of information to obtain an access token from the Vectra Platform API. An access token is required to make requests to all of the Vectra Platform API endpoints.
-
-Vectra API Clients will inherit the rights of the role selected during creation. 
-
-You may want to create a separate role for the API integration for audit purposes, and only give it fine-grained RBAC rights. For the integration to work, the API Client will need:
-* Read access to Hosts
-* Read access to Accounts
-* Read access to Detections
-* Read access to "Manage - Groups"
-* Read/Write access to tags
-* Read/Write access to Notes & Other User's Notes
-
-## Host-based blocking
-
-The goal of host-based blocking is identifying internal hosts who need to be prevented from being able to further communicate internally and/or externally. The blocking will happen on host specific attributes, such as for instance the internal IP address, the MAC address or the hostname. 
-
-There are multiple parameters within the [config.py](./config.py) file which define how hosts are being selected for blocking:
-
-1. BLOCK_HOST_TAG: defines a tag that when set on a host will cause that host to be blocked.
-2. NO_BLOCK_HOST_GROUP_NAME: defines a group name, where all members of that group will not be blocked. That group needs to be created manually on the Detect UI, it will not be created by the script.
-3. BLOCK_HOST_GROUP_NAME: defines a group name, where all members of that group will be blocked. That group need to be created manually on the Cognito UI, it will not be created by the script. 
-4. BLOCK_HOST_THREAT_CERTAINTY: defines a threat and certainty score threshold, above which host will get blocked. The middle variable can be either _and_ or _or_, defining how the threat and certainty conditions are threated.
-5. BLOCK_HOST_URGENCY: defines an urgency score threshold, above which host will get blocked. Only used with V3 API Can't have both BLOCK_HOST_THREAT_CERTAINTY and BLOCK_HOST_URGENCY. If both provided and V3 is True, BLOCK_HOST_URGENCY will be used. To use BLOCK_HOST_THREAT_CERTAINTY set BLOCK_HOST_URGENCY = None
-6. BLOCK_HOST_DETECTION_TYPES: this is a list containing specific detection types, which when present on a host will cause that host to be blocked. 
-7. BLOCK_HOST_DETECTION_TYPES_MIN_TC_SCORE: minimum Threat and/or Certainty scores for an HOST with specified detection types before it will be blocked. 
-
-Besides this, the _NO_BLOCK_HOST_GROUP_NAME_ Defines a group name from which all members will never be blocked. Users need to create that group themselves, it is not created automatically by the script. 
-
-**Important:** when blocking conditions are no longer fulfilled for a host, either because the blocking tag was removed, its score decreased, group membership was revoked, or the specific detection types causing blocking were fixed, the host will be automatically unblocked by the script on the next run. 
-
-## Account-based blocking
-
-The goal of account-based blocking is to disable or otherwise restrict an account to limit its usage by an adversary.
-Currently, the only module supporting this functionality is by calling an external program with the `external_call` module.
-
-1. BLOCK_ACCOUNT_TAG: defines the tag applied to an account which results in the block_account methods being called for the configured clients
-2. NO_BLOCK_ACCOUNT_GROUP_NAME: defines a group name, where all members of that group will not be blocked. That group needs to be created manually on the Detect UI, it will not be created by the script.
-3. BLOCK_ACCOUNT_GROUP_NAME: defines a group name, where all members of that group will be blocked. That group need to be created manually on the Detect UI, it will not be created by the script.
-4. BLOCK_ACCOUNT_THREAT_CERTAINTY: defines a threat and certainty score threshold, above which host will get blocked. The middle variable can be either _and_ or _or_, defining how the threat and certainty conditions are treated.
-5. BLOCK_ACCOUNT_URGENCY: defines an urgency score threshold, above which host will get blocked. Only used with V3 API Can't have both BLOCK_ACCOUNT_THREAT_CERTAINTY and BLOCK_ACCOUNT_URGENCY. If both provided and V3 is True, BLOCK_ACCOUNT_URGENCY will be used. To use BLOCK_ACCOUNT_THREAT_CERTAINTY set BLOCK_ACCOUNT_URGENCY = None
-6. BLOCK_ACCOUNT_DETECTION_TYPES: this is a list containing specific detection types, which will always result in the account being blocked. 
-7. BLOCK_ACCOUNT_DETECTION_TYPES_MIN_TC_SCORE: minimum Threat and/or Certainty scores for an account with specified detection types before it will be blocked.
-
-## Detection-based blocking
-
-The goal of detection-based blocking is identifying detection containing external components (IP or domain), which can then be blacklisted on various security tools to prevent communication towards those from any internal machine. 
-
-Most internal-focused third party clients, such as NACs or endpoints will not implement detection-based blocking, as they are not able to block public IPs/domains. This is mainly relevant for Firewall specific third party clients. Nevertheless, using detection based blocking with a mix of clients supporting it and not is not an issue, but will cause warnings to be logged when executing the script. 
-
-Since this usually will block the IP/domain for the whole environment, **extreme care is advised**, as in the case of false-positives it can have a large impact on the network. 
-
-There are multiple parameters within the [config.py](./config.py) file which define how detections are being selected for blocking:
-
-1. EXTERNAL_BLOCK_HOST_TC: defines host threat/certainty score above which all detections present on that host will get marked for blocking (or at least any external component present in those detections). 
-2. EXTERNAL_BLOCK_DETECTION_TAG: defines a tag that when set on a detection will cause all external components of that detection to be blocked. 
-3. EXTERNAL_BLOCK_DETECTION_TYPES: this is a list containing specific detection types, which will always have their external components automatically blocked. Any valid detection type will be accepted by the script, but it only makes sense for detections with an external component, thus Botnet, Command&Control or Exfil detections. 
-
-# Configuring the Third-Party clients used
-
-Users need to configure which third-party clients they intend the script to use. This configuration needs to be done directly in the [config.py](./config.py) file. The user can manually update the [config.py](./config.py) and the [third_party_clients/third_party_client/third_party_client_config.py], or utilize the [var_config_helper.py](./var_config_helper.py) script.  To run the script:
-
-`python3 var_config_helper.py`
-
-The script will pull all of the pertinent variables and present them to the user for configuration.  When the script is complete, all configurations will be written to the appropriate configuration file(s).
+pip3 install -r requirements.txt
 
 
-## Instantiating the clients
+	2.	必須使用 Vectra API Tools 2.4 版或更高版本，以支援基於帳戶的群組功能。
 
-By default, all clients configured in the [config.py](./config.py) file are automatically instantiated.
+工作流程
 
+腳本支援基於以下方式的阻止操作：
+	•	主機（Host-based）
+	•	帳戶（Account-based）
+	•	檢測項（Detection-based）
 
-## Passing the third party client instances to the script
+阻止條件定義於 config.py 文件中。
 
-Once all required third party clients have been instantiated, they are appended to the list argument _(third_party_client)\_. When the instantiation call of the _VectraAutomatedResponse()_ class is called, all required third party clients will be available to that class.
+安全憑證存儲
 
+此腳本使用 Python Keyring 套件安全地存儲憑證。
+腳本會檢查預設的 Keyring 是否包含必要的憑證，若未找到會提示用戶輸入。
+預設配置會在輸入後存儲憑證；如不希望存儲，請使用 --no_store_secrets 選項。
 
-## Selecting what block types to run
+獲取 Vectra API Token（v2）
 
-Users can also configure if they want to run only host-based, account-based, detection-based blocking or all. 
+Vectra Detect API v2 使用基於 Token 的身份驗證。
+	1.	登入 Vectra，進入「My Profile」並創建 API Token。
+	2.	僅本地帳戶可生成 API Token。
+	3.	建議創建單獨的 API 整合用戶，並分配精細的 RBAC 權限。
 
-If one type is not desired, you can comment out the corresponding code blocks:
+API Token 所需權限：
+	•	讀取主機（Hosts）
+	•	讀取帳戶（Accounts）
+	•	讀取檢測項（Detections）
+	•	讀取「管理 - 群組」
+	•	標籤的讀/寫權限
+	•	備註與其他用戶備註的讀/寫權限
 
-```python
-# Those 3 lines handle host-based blocking; comment them out if you don't want it
+獲取 Vectra API 客戶端 ID 和密鑰（v3）
+	1.	登入 Detect 入口網站，進入「Manage > API Clients」，選擇「Add API Client」新增客戶端。
+	2.	記錄客戶端 ID 和密鑰，這兩個信息將用於獲取 API Token。
+	3.	建議為整合創建單獨角色，並分配精細的 RBAC 權限。
+
+主機阻止
+
+根據以下條件阻止內部主機的通訊：
+	1.	BLOCK_HOST_TAG：當主機被標記此標籤時觸發阻止。
+	2.	NO_BLOCK_HOST_GROUP_NAME：此群組中的成員不會被阻止。
+	3.	BLOCK_HOST_GROUP_NAME：此群組中的成員將被阻止。
+	4.	BLOCK_HOST_THREAT_CERTAINTY：威脅與確定性分數門檻。
+	5.	BLOCK_HOST_URGENCY：僅對 V3 API，緊急性分數門檻。
+	6.	BLOCK_HOST_DETECTION_TYPES：特定檢測類型觸發阻止。
+	7.	BLOCK_HOST_DETECTION_TYPES_MIN_TC_SCORE：指定檢測類型的最低分數。
+
+帳戶阻止
+
+目前僅 external_call 模組支援帳戶阻止。
+阻止條件類似於主機阻止，需配置 config.py 文件中的相關參數。
+
+檢測項阻止
+
+目標為阻止包含外部元件（如 IP 或域名）的檢測項。
+主要應用於防火牆類第三方客戶端。
+請謹慎使用，因為錯誤的阻止可能對網路造成嚴重影響。
+
+配置第三方客戶端
+	•	修改 config.py 文件以添加所需的第三方客戶端。
+	•	可使用輔助腳本進行交互式配置：
+
+python3 var_config_helper.py
+
+選擇阻止類型
+
+可設定執行主機、帳戶或檢測項的阻止操作，或同時執行：
+
+# 主機阻止
 hosts_to_block, hosts_to_unblock = var.get_hosts_to_block_unblock()
 var.block_hosts(hosts_to_block)
 var.unblock_hosts(hosts_to_unblock)
 
-# Those 3 lines handle detection-based blocking; comment them out if you don't want it
+# 檢測項阻止
 detections_to_block, detections_to_unblock = var.get_detections_to_block_unblock()
 var.block_detections(detections_to_block)
 var.unblock_detections(detections_to_unblock)
-```
 
-### Using the external_call module
-The external call module's configuration file contains a list per blocking/unblocking action which supplies the command and required arguments to the external program to execute the desired functionality.
-```python
-HOST_BLOCK_CMD = []
-HOST_UNBLOCK_CMD = []
-ACCOUNT_BLOCK_CMD = []
-ACCOUNT_UNBLOCK_CMD = []
-DETECTION_BLOCK_CMD = []
-DETECTION_UNBLOCK_CMD = []
-```
-# We need first to put the endpoint in a temporary policy to make the port bounce
-QUARANTAINE_POLICY = "block"
-```
+運行腳本
+	1.	手動運行：
 
+python3 vectra_automated_response.py
 
-To configure commands, each element of the command must become an element in the appropriate list.  As an example, if the desired command to execute is to ping source IP 5 times, the list would be configured as such:  
-```python
-HOST_BLOCK_CMD = ['ping', '-t', '5']
-```
+	2.	設定為服務模式（迴圈執行）：
 
-The default code in the `external_call.py` module is written to supply the command and arguments followed by the host IP or account name, by appending the host IP or account name to the command list.    
-```python
-    def block_host(self, host):
-        if HOST_BLOCK_CMD:
-            id = uuid.uuid4()
-            cmd = HOST_BLOCK_CMD
-            cmd.append(host.ip)
-            r = subprocess.run(cmd)
-```
+python3 vectra_automated_response.py --loop
 
-The IP or account name may need to be inserted into command list vs appending, this requires modification to the default code. 
-
-## Static Destination IP Blocking
-Blocking of static IPs/Subnets is supported with FortiGate and Palo Alto firewalls by specifying IPs/subnets one per line,
-in the main configuration file `config.py`.  The parameter and default file name are:
-```text
-STATIC_BLOCK_DESTINATION_IPS = 'static_dst_ips_to_block.txt'
-```
-IPs or subnets can be added to the file, one per line, for blocking as a destination address.  Example:
-```text
-1.1.1.1
-2.2.2.0/24
-3.3.3.3
-```
-Removing an entry(ies) from the configuration file will result in the IP/subnet being removed from the firewall during 
-the next run of the script.
-
-
-## Running the script
-
-The script can be run manually, via a cron job, or as a service.  If running as a service, specify the `--loop`
-flag to run the script in a continuous loop with the pause time configured in the `config.py` file's variable 
-`SLEEP_MINUTES`.
-
-
-### Additional options
-
-#### Monitoring for IP changes
-
-Modules may support attempting to re-block a host (re-grooming) if that host's IP has changed since it was originally
-blocked.  To enable re-grooming for supported modules specify the `--groom` flag.
+重點整理
+	1.	靈活性：支援主機、帳戶與檢測項阻止，並整合多家安全系統。
+	2.	安全性：使用 Keyring 存儲敏感信息，並提供精細的 RBAC 控制。
+	3.	自動化：支援定時運行與持續監控，減少手動操作。
+	4.	高擴展性：只需擴展抽象類，即可快速整合新廠商工具。
+	5.	注意事項：謹慎設定檢測項阻止條件，以避免對網路運行造成影響。
